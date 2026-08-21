@@ -19,20 +19,19 @@
 
   <hr>
 
-  <!-- UPDATED: Form action points to Formspree for data collection -->
-  <form action="https://formspree.io/f/xgawqvak" method="POST">
+  <form id="registrationForm">
 
     <!-- Full Name -->
     <div>
-      <label for="full-name">Full Name *</label><br>
-      <input type="text" id="full-name" name="full_name" placeholder="Your answer" required>
+      <label for="full_name">Full Name *</label><br>
+      <input type="text" id="full_name" name="full_name" placeholder="Your answer" required>
     </div>
     <br>
 
     <!-- Name with Initials -->
     <div>
-      <label for="name-initials">Name with Initials *</label><br>
-      <input type="text" id="name-initials" name="name_initials" placeholder="Your answer" required>
+      <label for="name_initials">Name with Initials *</label><br>
+      <input type="text" id="name_initials" name="name_initials" placeholder="Your answer" required>
     </div>
     <br>
 
@@ -89,8 +88,8 @@
 
     <!-- Age Group -->
     <div>
-      <label for="age-group">Age Group *</label><br>
-      <select id="age-group" name="age_group" required>
+      <label for="age_group">Age Group *</label><br>
+      <select id="age_group" name="age_group" required>
         <option value="" disabled selected>Choose</option>
         <option value="Under 18">Under 18</option>
         <option value="18-24">18-24</option>
@@ -223,16 +222,74 @@
 
     <!-- Submission Buttons -->
     <div>
-      <input type="submit" value="Submit">
+      <input type="submit" id="submitBtn" value="Submit">
       <input type="reset" value="Clear form">
     </div>
 
   </form>
 
+  <p id="statusMsg" style="font-weight: bold; color: green;"></p>
+
   <footer>
     <hr>
     <p><small>Never submit passwords through Google Forms.</small></p>
   </footer>
+
+  <script>
+    // --- PUT YOUR SHEETDB API URL HERE ---
+    const SHEETDB_URL = 'https://sheetdb.io/api/v1/8etxwlx9t8mxu'; 
+
+    const form = document.getElementById('registrationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMsg = document.getElementById('statusMsg');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.value = 'Submitting...';
+      statusMsg.innerText = 'Sending your registration...';
+      statusMsg.style.color = 'black';
+
+      const formData = new FormData(form);
+      const dataObj = {};
+
+      // This loop safely groups multiple checkboxes (like interests) into a single comma-separated string
+      for (let [key, value] of formData.entries()) {
+        if (dataObj[key]) {
+          dataObj[key] += ', ' + value;
+        } else {
+          dataObj[key] = value;
+        }
+      }
+
+      // Automatically add a timestamp
+      dataObj['Timestamp'] = new Date().toLocaleString();
+
+      // Send JSON payload to SheetDB
+      fetch(SHEETDB_URL, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: [dataObj] })
+      })
+      .then(response => response.json())
+      .then(data => {
+        statusMsg.innerText = 'Thank you! Your registration has been submitted successfully.';
+        statusMsg.style.color = 'green';
+        submitBtn.disabled = false;
+        submitBtn.value = 'Submit';
+        form.reset();
+      })
+      .catch(error => {
+        statusMsg.innerText = 'Error submitting form. Please check your connection and try again.';
+        statusMsg.style.color = 'red';
+        submitBtn.disabled = false;
+        submitBtn.value = 'Submit';
+      });
+    });
+  </script>
 
 </body>
 </html>
